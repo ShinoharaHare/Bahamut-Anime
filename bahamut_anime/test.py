@@ -1,6 +1,6 @@
 import time
 
-from bahamut_anime import *
+from anime import *
 
 
 def _timer(func):
