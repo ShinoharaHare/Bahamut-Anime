@@ -1,4 +1,4 @@
-EX: 以[刀劍神域 Alicization [1A]](https://ani.gamer.com.tw/animeVideo.php?sn=10849)舉例
+EX: 以[刀劍神域 Alicization [1A]](https://ani.gamer.com.tw/animeVideo.php?sn=10849)舉例，sn為10849
 # Anime物件
 
  ```
