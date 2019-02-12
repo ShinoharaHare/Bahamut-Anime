@@ -14,11 +14,11 @@ EX: 以[刀劍神域 Alicization [1A]](https://ani.gamer.com.tw/animeVideo.php?s
 ### Methods
 ||意義|值|
 |:---:|:---:|:---:|
-|``next()``|回傳下一集的物件，若沒有下一集回傳None|Anime('10924')|
+|``next()``|回傳下一集的物件，若沒有下一集回傳None|<Anime>|
 |``previous()``|回傳上一集的物件，若沒有上一集回傳None|None|
-|``series()``|回傳Series物件|Series('10849')|
-|``m3u8('720p')``|回傳一個[m3u8物件](https://github.com/globocom/m3u8)，參數為解析度，預設為可用的最高解析度|(720p)|
-|``m3u8s()``|回傳一個m3u8的list依序為360p,540p,720p,1080p，若不可用的為None|[(360p), (540p), (720p), None]|
+|``series()``|回傳一個Series物件|<Series>|
+|``m3u8('720p')``|回傳一個[m3u8物件](https://github.com/globocom/m3u8)，參數為解析度，預設為可用的最高解析度|<m3u8>|
+|``m3u8s()``|回傳一個dict，包含所有解析度的m3u8|{'360p': <m3u8>, '540p': <m3u8>, '720p': <m3u8>}
 
 # Series物件
 可以用任何一集的sn
