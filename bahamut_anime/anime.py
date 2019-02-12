@@ -1,8 +1,8 @@
 import re
 import time
 import weakref
-from urllib.parse import *
 from collections import OrderedDict
+from urllib.parse import *
 
 import m3u8
 import requests
@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 __all__ = ['Anime', 'Series']
 
 
-ACCOUNT = ''
-PASSWORD = ''
+BAHAENUR = ''
+BAHARUNE = ''
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
 
 _BASE_URL = 'https://ani.gamer.com.tw'
@@ -22,7 +22,11 @@ _M3U8_URL = urljoin(_BASE_URL, 'ajax/m3u8.php')
 _DEVICE_URL = urljoin(_BASE_URL, 'ajax/getdeviceid.php')
 _HEADERS = {
     'Origin': _BASE_URL,
-    'User-Agent': USER_AGENT
+    'User-Agent': USER_AGENT,
+}
+_COOKIES = {
+    'BAHAENUR': BAHAENUR,
+    'BAHARUNE': BAHARUNE
 }
 
 class Score:
@@ -42,8 +46,9 @@ class _Anime:
 
     def __init__(self, sn):
         self.sn = sn
-        self._session = requests.session()
-        self._session.headers = _HEADERS
+        self._session = requests.Session()
+        self._session.headers.update(_HEADERS)
+        self._session.cookies.update(_COOKIES)
 
         self._ad_id = None
         self._device_id = None

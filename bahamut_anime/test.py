@@ -15,6 +15,6 @@ def timer(func):
 @timer
 def main():
     sao3 = Anime(10849)
-    print(sao3.m3u8s())
+    print(sao3.m3u8().segments[0].absolute_uri)
 if __name__ == "__main__":
     main()
