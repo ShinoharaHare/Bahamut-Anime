@@ -34,4 +34,4 @@ sao3 = Series(10849)
 |`sao3['1A']`|1A的Anime物件|\<Anime\>(同上)
 |`sao3[-1]`|最後一集(最新一集)的Anime物件|\<Anime\>(18)
 |`for episode in sao3`|從第一集到最後一集(最新一集)|
-|`len(sao3)`|總共幾集|\<Anime\>(19)|
+|`len(sao3)`|總共幾集|19|
