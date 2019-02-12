@@ -10,6 +10,11 @@ from bs4 import BeautifulSoup
 
 __all__ = ['Anime', 'Series']
 
+
+ACCOUNT = ''
+PASSWORD = ''
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+
 _BASE_URL = 'https://ani.gamer.com.tw'
 _ANIME_URL = urljoin(_BASE_URL, 'animeVideo.php')
 _CASTCISHU_URL = urljoin(_BASE_URL, 'ajax/videoCastcishu.php')
@@ -17,7 +22,7 @@ _M3U8_URL = urljoin(_BASE_URL, 'ajax/m3u8.php')
 _DEVICE_URL = urljoin(_BASE_URL, 'ajax/getdeviceid.php')
 _HEADERS = {
     'Origin': _BASE_URL,
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+    'User-Agent': USER_AGENT
 }
 
 class Score:
@@ -43,7 +48,8 @@ class _Anime:
         self._ad_id = None
         self._device_id = None
         self._playlist = None
-        self._m3u8s = [None, None, None, None]
+        self._m3u8s = {}
+        self._resolutions = []
         self._load_basic_info()
     
     def _load_basic_info(self):
@@ -53,27 +59,10 @@ class _Anime:
         #重要資訊
         pattern = re.compile(r'animefun.videoSn')
         script = self._soup.find('script', string=pattern).string
-        
         self.title = re.search(r'title = (.*);', script).group(1)
         self.episode = re.search(r'\[(.*)\]', self.title).group(1)
         self.next_sn = re.search(r'nextSn = (.*);', script).group(1)
         self.previous_sn = re.search(r'preSn = (.*);', script).group(1)
-
-        '''
-        if ul:
-            get_sn_from_href = lambda x: parse_qs(urlparse(x).query)['sn'][0]
-            sn_list = list(map(lambda x: get_sn_from_href(x.a['href']), ul))
-
-            for i, li in enumerate(ul.children):
-                if 'playing' in li['class']: current = i
-                latest = i
-            
-            self.episode = current + 1
-            self.first_sn = sn_list[0] if current != 0 else None
-            self.latest_sn = sn_list[latest] if current != latest else None
-            self.next_sn = sn_list[current + 1] if self.latest_sn else None
-            self.previous_sn = sn_list[current - 1] if self.first_sn else None
-        '''
 
         #無用資訊
         pattern = re.compile(r'上架時間：(.*)')
@@ -82,14 +71,6 @@ class _Anime:
         self.description = self._soup.find('meta', attrs={"name":"description"})['content']
         self.score = Score(self._soup.find('div', class_='data_acgbox'))
         self.category = Category(self._soup.find('div', class_='data_type'))
-
-    '''
-    def get_first_episode(self):
-        return Anime(self.first_sn) if self.first_sn else self
-    
-    def get_latest_episode(self):
-        return Anime(self.latest_sn) if self.latest_sn else self
-    '''
 
     def next(self):
         return Anime(self.next_sn) if self.next_sn != '0' else None
@@ -101,8 +82,7 @@ class _Anime:
         return Series(self.sn)
 
     def reload(self):
-        self._playlist = None
-        self._m3u8s = [None, None, None, None]
+        pass
 
     @property
     def device_id(self):
@@ -114,22 +94,25 @@ class _Anime:
         if not self._playlist: self._receive_playlist()
         return self._playlist
 
+    @property
+    def resolutions(self):
+        if not self._resolutions: self._receive_resolutions()
+        return self._resolutions
+
     def m3u8(self, resolution=None):
-        key = ['360p', '540p', '720p', '1080p']
-        
         if resolution is None:
-            resolution = len(self.playlist.playlists) - 1
-        elif resolution in res:
-            resolution = key.index(resolution)
-        
-        if not self._m3u8s[resolution]:
+            resolution = max(self.resolutions)
+        elif resolution not in self.resolutions:
+            raise KeyError('Resolution \'%s\' is not available' % resolution)
+
+        if resolution not in self._m3u8s:
             self._receive_m3u8(resolution)
 
         return self._m3u8s[resolution]
 
     def m3u8s(self):
-        for i in range(len(self.playlist.playlists)):
-            if not self._m3u8s[i]:
+        for i in self.resolutions:
+            if i not in self._m3u8s:
                 self._receive_m3u8(i)
         
         return self._m3u8s
@@ -168,11 +151,18 @@ class _Anime:
         src = 'https:' + src.replace(r'\/', r'/')
         response = self._session.get(src)
         self._playlist = m3u8.loads(response.text, uri=src)
+    
+    def _receive_resolutions(self):
+        self._resolutions.clear()
+        for i in self.playlist.playlists:
+            resolution = str(i.stream_info.resolution[1]) + 'p'
+            self._resolutions.append(resolution)
 
-    def _receive_m3u8(self, index):
+    def _receive_m3u8(self, resolution):
+        index = self.resolutions.index(resolution)
         p = self.playlist.playlists[index]
         response = self._session.get(p.absolute_uri)
-        self._m3u8s[index] = m3u8.loads(response.text, uri=p.absolute_uri)
+        self._m3u8s[resolution] = m3u8.loads(response.text, uri=p.absolute_uri)
             
     def __str__(self):
         return self.title
@@ -205,7 +195,6 @@ class _Series:
     def __getitem__(self, key):
         if type(key) is int:
             keys = list(self._sns.keys())
-            #key = key - 1 if key > 0 else key
             key = keys[key]
 
         anime = Anime(self._sns[key])    
