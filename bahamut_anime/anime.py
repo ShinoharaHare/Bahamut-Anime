@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 __all__ = ['Anime', 'Series']
 
 
-BAHAENUR = ''
-BAHARUNE = ''
+BAHAENUR = 'd319fe05c5e23b143968431f34db6320'
+BAHARUNE = '27c37f29afc912de9f8d08658952006a6261c3466262a54707f9152b645d20ad96451f09267aef9035d0'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
 
 _BASE_URL = 'https://ani.gamer.com.tw'
@@ -140,20 +140,26 @@ class _Anime:
     def _receive_device_id(self):
         response = self._session.get(_DEVICE_URL)
         json = response.json()
-        self._device_id = json['deviceid']
+        self._device_id = json['deviceid']        
 
     def _receive_playlist(self):
-        params = {'sn': self.sn}
-        self._session.get(_CASTCISHU_URL, params=params)
-        params.update({'ad': 'end'})
-        while True:
-            self._session.get(_CASTCISHU_URL, params=params)
+        src = ''
+        def Src():
             response = self._session.get(_M3U8_URL, params={'sn': self.sn, 'device': self.device_id})
             json = response.json()
+            nonlocal src
             src = json['src']
-            if src: break
-            else: time.sleep(0.1)
-        src = 'https:' + src.replace(r'\/', r'/')
+        Src()
+        if not src:
+            params = {'sn': self.sn}
+            self._session.get(_CASTCISHU_URL, params=params)
+            params.update({'ad': 'end'})
+            while True:
+                self._session.get(_CASTCISHU_URL, params=params)
+                Src()
+                if src: break
+                else: time.sleep(0.1)
+        src = 'https:' + src
         response = self._session.get(src)
         self._playlist = m3u8.loads(response.text, uri=src)
     
